@@ -15,8 +15,10 @@
                 {{ props.row.order_ID }}
             </b-table-column>
 
-            <b-table-column field="name" label="Name" sortable numeric v-slot="props">
-                {{ props.row.name }}
+            <b-table-column field="name" label="Name" sortable numeric v-slot="{ row: { name } }">
+                <b-tooltip :active="name.length > 10" :label="name">
+                    {{ name.length > 10 ? `${name.slice(0, 10)}...` : name }}
+                </b-tooltip>
             </b-table-column>
 
             <b-table-column field="created_at" label="Date" sortable centered v-slot="{ row: { created_at } }">
@@ -53,8 +55,7 @@
             <b-table-column field="fulfillment_status" centered label="Status" v-slot="{ row: { fulfillment_status } }">
                 <b-tag class="status"
                     :type="fulfillment_status === 'fulfilled' ? 'is-success is-light' : 'is-danger is-light'">
-                    {{
-                        fulfillment_status }}
+                    {{ fulfillment_status }}
                 </b-tag>
             </b-table-column>
 
@@ -141,6 +142,10 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+table.table {
+    table-layout: fixed;
+}
+
 .table__header {
     margin-bottom: 1rem;
 }
