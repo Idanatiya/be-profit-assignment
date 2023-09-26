@@ -1,35 +1,17 @@
-# vue-project
+# BeProfit Frontend Assignment
+![Screen Shot 2023-09-26 at 8 54 50](https://github.com/Idanatiya/be-profit-assignment/assets/71948616/37214ef5-8a5a-4dd6-9e6a-e1cfca772d9d)
 
-This template should help get you started developing with Vue 3 in Vite.
 
-## Recommended IDE Setup
+The Project was to create a CRUD app with table using orders mock data
+I have used Vue.js
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+To run the project:
 
-## Customize configuration
+git clone
 
-See [Vite Configuration Reference](https://vitejs.dev/config/).
-
-## Project Setup
-
-```sh
 npm install
-```
 
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
-```
 
-### Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+Check the app live!:
+https://symphonious-bunny-498e3b.netlify.app/
