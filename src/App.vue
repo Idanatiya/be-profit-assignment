@@ -1,13 +1,11 @@
 <script>
-
-
-import TheSidebar from './layout/TheSidebar/TheSidebar.vue'
-import DashboardView from './views/DashboardView.vue'
+import TheSidebar from '@/layout/TheSidebar/TheSidebar.vue'
+import DashboardView from '@/views/DashboardView.vue'
 
 export default {
   components: {
     TheSidebar,
-    DashboardView
+    DashboardView,
   }
 
 }
@@ -16,10 +14,9 @@ export default {
 
 <template>
   <div class="root">
-    <the-sidebar />
+    <TheSidebar />
     <main class="main-content">
-      <dashboard-view />
-      <!-- <RouterView /> -->
+      <DashboardView />
     </main>
   </div>
 </template>
@@ -33,6 +30,6 @@ export default {
 
 .main-content {
   grid-column: 2 / -1;
-  padding: 10px;
+  padding: 20px
 }
 </style>

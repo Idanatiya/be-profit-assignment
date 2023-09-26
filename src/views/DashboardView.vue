@@ -1,80 +1,144 @@
 <script>
-import mockOrders from '../orders.json'
+import OrderTable from '@/components/OrderTable/OrderTable.vue'
+import { orderService } from '@/services/orderService.js'
+import { showToast } from '@/utils'
+import { storageService } from '@/services/storageService'
+import { STORAGE_KEY } from '@/constants'
+import CreateOrderForm from '@/components/CreateOrderForm/CreateOrderForm.vue'
+
 
 export default {
     name: 'DashboardView',
-    data: () => {
-        return {
-            data: mockOrders,
-            isPaginated: true,
-            isPaginationSimple: false,
-            isPaginationRounded: false,
-            paginationPosition: 'bottom',
-            defaultSortDirection: 'asc',
-            sortIcon: 'arrow-up',
-            sortIconSize: 'is-small',
-            currentPage: 1,
-            perPage: 20,
+    components: {
+        OrderTable,
+        CreateOrderForm,
+    },
+    data: () => ({
+        orders: [],
+        isLoading: true,
+        isModalActive: false,
+        orderToEdit: null
+    }),
+    methods: {
+        toggleModal() {
+            this.isModalActive = !this.isModalActive
+        },
+        async fetchOrders() {
+            try {
+                const orders = await orderService.getOrders()
+                this.orders = orders
+                storageService.saveToStorage(STORAGE_KEY, orders)
+                showToast('Orders has been fetched!')
+            } catch (error) {
+                showToast(error.message, 'is-danger')
+            } finally {
+                this.isLoading = false
+            }
+        },
+        async onDeleteOrder(orderId) {
+            const { orders } = this
+            showToast('Deleting is in progress')
+            try {
+                await orderService.deleteOrder(orderId)
+                const orderIdx = this.orders.findIndex(order => order.order_ID === orderId)
+                if (orderIdx > -1) {
+                    orders.splice(orderIdx, 1)
+                    storageService.saveToStorage(STORAGE_KEY, this.orders)
+                    showToast(`Order ${orderId} been deleted`)
+                }
+            } catch (err) {
+                showToast(err.message, 'is-danger')
+            }
+        },
+        async onCreateOrder(newOrder) {
+            try {
+                const order = await orderService.createOrder(newOrder)
+                this.orders.push(order)
+                storageService.saveToStorage(STORAGE_KEY, this.orders)
+                showToast('Order has been created')
+            } catch (err) {
+                showToast(err.message, 'is-danger')
+            }
+        },
+        async onEditOrder(updatedOrder) {
+            showToast('Update is in progress..')
+            try {
+                const updOrder = await orderService.editOrder(updatedOrder)
+                const orderIdx = this.orders.findIndex(order => order.order_ID === updOrder.order_ID)
+                if (orderIdx > -1) {
+                    this.orders.splice(orderIdx, 1, updatedOrder)
+                    storageService.saveToStorage(STORAGE_KEY, this.orders)
+                }
+                showToast('Order has been updated!')
+            } catch (err) {
+                showToast(err.message, 'is-danger')
+            }
+
+        },
+        onPressEdit(order) {
+            this.orderToEdit = order
+            this.toggleModal()
+        },
+        onCloseModal() {
+            if (this.orderToEdit) {
+                this.orderToEdit = null
+            }
         }
     },
     created() {
-
-    },
-    methods: {
-        getTableData() {
-            const data = mockOrders.map(order => {
-                const { order_ID, name, created_at, fulfillment_status, country, gross_profit } = order
-                return {
-                    order_ID,
-                    name,
-                    created_at,
-                    fulfillment_status,
-                    country
-                }
-            })
-            console.log({ data })
-            this.data = data
-        }
+        const orderDB = storageService.loadFromStorage(STORAGE_KEY)
+        if (!orderDB) return this.fetchOrders()
+        this.isLoading = false
+        this.orders = orderDB
     }
 }
 </script>
 
+
 <template>
-    <div>
-        <h1>Dashboard</h1>
-        <b-table :data="data" :paginated="isPaginated" :per-page="perPage" :default-sort-direction="defaultSortDirection"
-            :pagination-position="paginationPosition" :pagination-rounded="isPaginationRounded" :sort-icon="sortIcon"
-            :sort-icon-size="sortIconSize" default-sort="data.order_ID" aria-next-label="Next page"
-            aria-previous-label="Previous page" aria-page-label="Page">
-            <b-table-column field="order_ID" label="#Order ID" width="40" sortable numeric v-slot="props">
-                {{ props.row.order_ID }}
-            </b-table-column>
-
-            <b-table-column label="Name" sortable v-slot="props">
-                {{ props.row.name }}
-            </b-table-column>
-
-            <b-table-column field="fulfillment_status" label="Fullfillment Status" sortable v-slot="props">
-                {{ props.row.fulfillment_status }}
-            </b-table-column>
-
-            <b-table-column field="created_at" label="Date" sortable centered v-slot="props">
-                <span class="tag is-success">
-                    {{ new Date(props.row.created_at).toLocaleDateString() }}
-                </span>
-            </b-table-column>
-
-            <b-table-column field="gross_profit" label="Profit" sortable v-slot="props">
-                {{ props.row.gross_profit }}
-            </b-table-column>
-
-            <b-table-column label="Country" v-slot="props">
-                <span>
-                    {{ props.row.country }}
-                </span>
-            </b-table-column>
-
-        </b-table>
+    <div class="dashboard">
+        <b-loading v-if="isLoading" is-full-page v-model="isLoading" :can-cancel="true"></b-loading>
+        <template v-else-if="!orders.length">
+            <b-button @click="fetchOrders">
+                Fetch orders again!
+            </b-button>
+        </template>
+        <template v-else>
+            <header class="dashboard__header">
+                <h1>Orders</h1>
+                <b-button class="create__btn" icon-left="plus" rounded @click="toggleModal">
+                    Create Order
+                </b-button>
+            </header>
+            <OrderTable @deleteOrder="onDeleteOrder" @pressEdit="onPressEdit" :orders="orders" />
+            <b-modal @close="onCloseModal" v-model="isModalActive" has-modal-card trap-focus destroy-on-hide
+                aria-role="dialog" aria-label="Example Modal" close-button-aria-label="Close" aria-modal>
+                <template #default="props">
+                    <CreateOrderForm @createOrder="onCreateOrder" @editOrder="onEditOrder" @close="props.close"
+                        :orderToEdit="orderToEdit" />
+                </template>
+            </b-modal>
+        </template>
 
     </div>
 </template>
+
+<style lang="scss" scoped>
+.dashboard__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+
+    h1 {
+        font-size: 2rem;
+        font-weight: bold;
+    }
+
+    .create__btn {
+        background: #2783f5;
+        color: white;
+    }
+
+}
+</style>
